@@ -1,0 +1,541 @@
+{
+  "framework_meta": {
+    "nome": "Framework Mestre de Desenvolvimento Aumentado",
+    "versao": "1.0",
+    "metodologia": "Vibe Coding + Desenvolvimento Aumentado",
+    "data_criacao": "2025-11-18",
+    "total_modulos": 4,
+    "descricao": "Framework estruturado de orquestração de IA para desenvolvimento de software robusto e profissional"
+  },
+  "filosofia_base": {
+    "vibe_coding": "Esquecer que o código existe e focar em descrever o comportamento desejado via linguagem natural",
+    "desenvolvimento_aumentado": "Aplicar rigor, testes e governança ao processo de Vibe Coding para uso profissional",
+    "contexto_layering": "Empilhamento hierárquico de contextos para manter coerência enquanto complexidade aumenta",
+    "risk_mitigation": "Transformar experimentalismo em prática de engenharia robusta e corporativa"
+  },
+  "modulos": {
+    "modulo_1": {
+      "titulo": "MÓDULO I: Estratégia e Engenharia de Requisitos",
+      "foco": "Porquê e O Quê",
+      "objetivo": "Estabelecer bases estratégicas antes de qualquer linha de código ser gerada",
+      "artefato_saida": "Contexto I - PRD (Product Requirements Document)",
+      "descricao": "Clareza estratégica é o primeiro requisito técnico. A ambiguidade na definição amplifica alucinações de IA.",
+      "fases": {
+        "fase_1_prd_artefato_mestre": {
+          "nome": "Geração do PRD como Artefato Mestre de Contexto",
+          "descricao": "O PRD funciona como 'memória de longo prazo' inicial da IA",
+          "metodologia": "Usar LLM como 'Arquiteto de Soluções Sênior'",
+          "innovacao": "Recursividade: usar IA para gerar contexto que alimentará a própria IA",
+          "beneficio": "Alinhamento linguístico e estrutural com terminologia que o modelo prefere consumir",
+          "etapas": [
+            {
+              "etapa": 1,
+              "nome": "Definição de Persona e Audiência",
+              "instrucao": "Criar personas detalhadas incluindo dados demográficos, comportamentais e dores",
+              "constraint": "'Design Centrado no Usuário deve estar no centro do processo'",
+              "output": "Personas com emppatia mapeada"
+            },
+            {
+              "etapa": 2,
+              "nome": "Mapeamento da Jornada do Usuário (User Flow)",
+              "instrucao": "Descrever o caminho crítico do usuário, identificando 'pontos de frustração' e 'oportunidades de melhoria'",
+              "constraint": "Otimizar para experiência, não apenas replicar fluxos padrão",
+              "output": "User Journey Map detalhado"
+            },
+            {
+              "etapa": 3,
+              "nome": "Geração do Documento Consolidado",
+              "instrucao": "Detalhar funcionalidades, requisitos de dados (esquemas DB iniciais) e stack tecnológica",
+              "constraint": "Documento deve ser 'congelado' e anexado como contexto imutável para fases seguintes",
+              "output": "PRD completo com stack: Next.js, Supabase, Tailwind CSS"
+            }
+          ],
+          "prompt_template": "Atue como um Arquiteto de Soluções Sênior. Com base na visão do projeto: '[VISÃO]', gere um PRD (Product Requirements Document) estruturado contendo: 1) Personas detalhadas (demográficas, comportamentais, dores); 2) Jornada do usuário com pontos de frustração; 3) Funcionalidades prioritárias; 4) Esquema de dados inicial; 5) Stack tecnológica recomendada. O Design Centrado no Usuário deve estar no centro do processo."
+        },
+        "fase_2_analise_competitiva": {
+          "nome": "Análise Competitiva e Princípios de Mercado",
+          "descricao": "Etapa frequentemente negligenciada em Vibe Coding amador, mas central neste framework",
+          "tecnica": "Few-Shot Learning implícito",
+          "metodologia": "Analisar 3+ aplicativos concorrentes",
+          "foco_areas": [
+            "Pontos fortes e fracos de UX",
+            "Acessibilidade e padrões de design",
+            "Gaps no mercado"
+          ],
+          "output": "Princípios de design acionáveis",
+          "prompt_template": "Atue como um Analista de Mercado Estratégico. Analise três aplicativos concorrentes líderes no espaço de '[CATEGORIA]': '[APP1]', '[APP2]', '[APP3]'. Para cada um, identifique: 1) Pontos fortes e fracos em UX/UI; 2) Padrões de acessibilidade implementados; 3) Gaps ou oportunidades não exploradas. Converta as descobertas em 5 princípios de design acionáveis que nosso produto deve adotar ou evitar."
+        }
+      }
+    },
+    "modulo_2": {
+      "titulo": "MÓDULO II: Blueprint de Design UX/UI",
+      "foco": "Materialização da 'Vibe'",
+      "objetivo": "Traduzir intenção emocional em diretrizes visuais e arquitetônicas concretas",
+      "artefato_saida": "Contexto II - Style Guide + Design System",
+      "descricao": "Vibe Design: interface emerge do sentimento desejado (Sensação -> Função -> Forma)",
+      "fases": {
+        "fase_1_sentimento_para_style_guide": {
+          "nome": "Do Sentimento ao Style Guide",
+          "descricao": "Converter adjetivos abstratos em especificações de UI concretas",
+          "metodologia": "Arquiteto de Vibe conduz prompts que transformam sentimento em diretrizes",
+          "papel_ia": "Especialista em Vibe Design",
+          "componentes_saida": [
+            {
+              "nome": "Paleta de Cores",
+              "descricao": "Definições semânticas: primária, secundária, destrutiva, status",
+              "exemplo": "Cor primária transmite 'segurança e institucionalidade' ou 'agilidade e modernidade'"
+            },
+            {
+              "nome": "Tipografia",
+              "descricao": "Escolhas que refletem personalidade da marca e garantem legibilidade",
+              "exemplo": "Sans-serif moderna para agilidade, serif para tradição"
+            },
+            {
+              "nome": "Componentização",
+              "descricao": "Estilos para botões, inputs, cards usando headless libraries",
+              "libraries": [
+                "shadcn/ui",
+                "Tailwind CSS"
+              ]
+            }
+          ],
+          "ferramentas_multimodais": [
+            "v0.dev",
+            "Claude Text-to-UI"
+          ],
+          "prompt_template": "Atue como um Especialista em Vibe Design. A intenção do produto é transmitir: '[ADJETIVOS: segurança, modernidade, agilidade, etc]'. Gere um Style Guide profissional contendo: 1) Paleta de cores semântica (primária, secundária, destrutiva, status) com códigos HEX; 2) Escolhas tipográficas (font families, tamanhos, pesos) que refletem essa vibe; 3) Especificações de componentização (botões, inputs, cards) usando Tailwind CSS e shadcn/ui. Inclua wireframes de alta fidelidade."
+        },
+        "fase_2_motion_microcopy": {
+          "nome": "Motion UX e Microcopy",
+          "descricao": "Componentes funcionais críticos, não ornamentos",
+          "subcomponentes": [
+            {
+              "nome": "Motion UX",
+              "descricao": "Microinterações usando Framer Motion",
+              "objetivo": "Transmitir agilidade e fornecer feedback tátil",
+              "exemplos": [
+                "Animações de carregamento",
+                "Feedback de clique",
+                "Transições suaves"
+              ]
+            },
+            {
+              "nome": "Microcopy",
+              "descricao": "Textos de interface empáticos e claros",
+              "objetivo": "Manter tom de voz definido na Persona, evitar robótica",
+              "elementos": [
+                "Mensagens de erro",
+                "Placeholders",
+                "Toasts de notificação"
+              ]
+            }
+          ],
+          "prompt_template": "Atue como um Especialista em UX Microinteractions. Baseado no Style Guide anterior, gere especificações de: 1) Motion UX - microinterações usando Framer Motion (carregamentos, cliques, transições) que transmitam '[VIBE]'; 2) Microcopy - textos de interface (erros, placeholders, toasts) com tom de voz empático baseado na persona '[PERSONA]'. Cada interação deve melhorar a percepção de performance."
+        },
+        "fase_3_acessibilidade_constraint": {
+          "nome": "Acessibilidade como Restrição de Ancoragem",
+          "descricao": "WCAG (Web Content Accessibility Guidelines) desde o design, não pós-desenvolvimento",
+          "paradigma": "Constraint Anchoring",
+          "focus_areas": [
+            "Contraste de cores (WCAG AA mínimo)",
+            "Navegação por teclado",
+            "Atributos ARIA",
+            "Leitura de tela"
+          ],
+          "beneficio": "Código gerado nasce inclusivo, reduzindo débito técnico futuro",
+          "prompt_template": "Atue como um Auditor de Acessibilidade WCAG. Revise o Style Guide e layouts propostos focando em: 1) Conformidade de contraste (WCAG AA - 4.5:1 para texto normal); 2) Suporte a navegação por teclado (tab order, focus visível); 3) Atributos ARIA necessários (aria-label, aria-describedby, aria-live); 4) Compatibilidade com leitores de tela. Forneça um relatório de conformidade e correções necessárias."
+        }
+      }
+    },
+    "modulo_3": {
+      "titulo": "MÓDULO III: Engenharia de Prompt Mestra",
+      "foco": "Orquestração Técnica",
+      "objetivo": "Convergir estratégia e design para instruir geração de código de qualidade",
+      "artefato_saida": "Contexto III - Prompts Mestres Estruturados",
+      "descricao": "Engenharia de Prompt transcende simples perguntas; é disciplina de arquitetura de informação",
+      "fases": {
+        "fase_1_estruturas_prompt": {
+          "nome": "Estruturas de Prompt: RTCF e CRISPA",
+          "descricao": "Frameworks mnemônicos rigorosos para construção de prompts mestres",
+          "subestruturas": [
+            {
+              "nome": "RTCF (Role, Task, Context, Format)",
+              "descricao": "Fórmula fundamental para clareza e precisão",
+              "componentes": [
+                {
+                  "parte": "Role (Papel)",
+                  "descricao": "Persona da IA que acessa subconjuntos específicos do treinamento",
+                  "exemplo": "Atue como um Arquiteto Sênior de React TypeScript",
+                  "impacto": "Prima o modelo com vocabulário de especialista"
+                },
+                {
+                  "parte": "Task (Tarefa)",
+                  "descricao": "Objetivo explícito e acionável",
+                  "exemplo": "Implementar o fluxo de autenticação JWT",
+                  "impacto": "Define a missão específica"
+                },
+                {
+                  "parte": "Context (Contexto)",
+                  "descricao": "Informação de fundo necessária",
+                  "elementos": [
+                    "PRD",
+                    "Style Guide",
+                    "Stack tecnológica",
+                    "Padrões arquiteturais"
+                  ]
+                },
+                {
+                  "parte": "Format (Formato)",
+                  "descricao": "Estrutura exata da saída",
+                  "exemplo": "Código em TypeScript, arquivos separados, comentários explicativos, testes Jest"
+                }
+              ],
+              "template_completo": "Atue como [ROLE]. Sua tarefa é [TASK]. Aqui está o contexto: [CONTEXT]. Formato esperado: [FORMAT]."
+            },
+            {
+              "nome": "CRISPA (Capacidade, Requerimento, Informação, Sistema, Perspectiva, Audiência)",
+              "descricao": "Versão expandida e nuançada, checklist avançado",
+              "componentes": [
+                {
+                  "parte": "Capacidade",
+                  "descricao": "Habilidades necessárias da IA"
+                },
+                {
+                  "parte": "Requerimento",
+                  "descricao": "Requisitos funcionais específicos"
+                },
+                {
+                  "parte": "Informação",
+                  "descricao": "Dados e contextos a fornecer"
+                },
+                {
+                  "parte": "Sistema",
+                  "descricao": "Restrições sistêmicas (bibliotecas, padrões)"
+                },
+                {
+                  "parte": "Perspectiva",
+                  "descricao": "Modo de pensamento específico (Chain-of-Thought)"
+                },
+                {
+                  "parte": "Audiência",
+                  "descricao": "Quem consumirá o output (dev, manager, cliente)"
+                }
+              ],
+              "utilidade": "Garante que nenhuma dimensão da instrução seja esquecida"
+            }
+          ]
+        },
+        "fase_2_context_layering": {
+          "nome": "Context Layering (Empilhamento de Contexto)",
+          "descricao": "Estruturação hierárquica de informação para janelas de contexto limitadas",
+          "problema": "LLMs possuem limitações de contexto e degradação de atenção em contextos longos",
+          "solucao": "Empilhar informação de forma deliberada e hierárquica",
+          "camadas": [
+            {
+              "numero": 1,
+              "nome": "Contexto de Negócio",
+              "descricao": "PRD gerado no Módulo I",
+              "funcao": "Define o problema a ser resolvido",
+              "input": "PRD completo com personas, user flows, requisitos"
+            },
+            {
+              "numero": 2,
+              "nome": "Contexto de Design",
+              "descricao": "Style Guide do Módulo II",
+              "funcao": "Define aparência e interação",
+              "input": "Style Guide com cores, tipografia, componentes, acessibilidade"
+            },
+            {
+              "numero": 3,
+              "nome": "Contexto Técnico",
+              "descricao": "Regras de projeto e padrões",
+              "funcao": "Define implementação e restrições",
+              "input": "Pattern Seeds, documentação de bibliotecas, convenções de código"
+            },
+            {
+              "numero": 4,
+              "nome": "Contexto Operacional",
+              "descricao": "Estado atual do código",
+              "funcao": "Mantém continuidade entre sessões",
+              "input": "Arquivos existentes, estrutura do projeto, commits recentes"
+            },
+            {
+              "numero": 5,
+              "nome": "Meta-Prompting",
+              "descricao": "Refinamento de prompts com IA",
+              "funcao": "Otimiza qualidade de instrução",
+              "input": "Feedback e iteração automática"
+            }
+          ],
+          "beneficio": "IA realiza triangulação de informações simultaneamente (requisito de negócio + estética + bibliotecas)"
+        },
+        "fase_3_constraint_anchoring": {
+          "nome": "Constraint Anchoring e Pattern Seeds",
+          "descricao": "Mecanismos de controle para qualidade e segurança",
+          "subcomponentes": [
+            {
+              "nome": "Constraint Anchoring (Ancoragem de Restrições)",
+              "descricao": "Regras inquebráveis que limitam espaço de solução",
+              "objetivo": "Vital para segurança e governança",
+              "exemplos_restricoes": [
+                "Não usar 'any' em TypeScript",
+                "Utilizar apenas componentes shadcn/ui",
+                "Garantir validação de input para prevenir XSS",
+                "Usar apenas variáveis de ambiente para secrets",
+                "WCAG AA conformidade obrigatória"
+              ],
+              "efeito": "Induz comportamento de 'Guardião do Sistema' - IA recusa gerar código inseguro",
+              "prompt_template": "As seguintes restrições são INQUEBRÁVEIS e devem ser respeitadas em qualquer circunstância: [LISTAR_RESTRICOES]. Qualquer solução proposta deve estar em conformidade total com essas restrições. Se for impossível, informe explicitamente."
+            },
+            {
+              "nome": "Pattern Seeds (Sementes de Padrão)",
+              "descricao": "Fornecer exemplos de código ideal para IA mimetizar",
+              "objetivo": "Garantir consistência arquitetural",
+              "metodologia": "Fornecer 'padrão ouro' de como um componente deve ser escrito",
+              "beneficio": "Facilita manutenção futura e evita reinvenção desnecessária",
+              "exemplo": "Exemplo de componente React bem estruturado com types, hooks, CSS Modules",
+              "prompt_template": "Aqui está o padrão de codificação que deve ser seguido para todo o projeto. Use-o como referência: [PATTERN_SEED]. Todos os componentes e funções futuros devem seguir este padrão exatamente."
+            }
+          ]
+        }
+      }
+    },
+    "modulo_4": {
+      "titulo": "MÓDULO IV: Execução e Validação",
+      "foco": "Materialização e Ciclo Vibe Loop",
+      "objetivo": "Implementação iterativa e conversacional com IA",
+      "artefato_saida": "Contexto IV - Código validado + Testes + Documentação",
+      "descricao": "Paradigma de desenvolvimento: (Prompt -> Gerar -> Refletir -> Repetir)",
+      "fases": {
+        "fase_1_vibe_loop": {
+          "nome": "Vibe Loop - Ciclo de Correção Colaborativo",
+          "descricao": "Redefine debugging tradicional para diálogo com IA",
+          "paradigma_tradicional": "Escrever -> Compilar -> Depurar (solitário)",
+          "paradigma_novo": "Prompt -> Gerar -> Refletir -> Corrigir (colaborativo)",
+          "mecanica": [
+            {
+              "passo": 1,
+              "nome": "Erro/Resultado Insatisfatório",
+              "descricao": "Algo não funciona ou visual não é satisfatório"
+            },
+            {
+              "passo": 2,
+              "nome": "Feedback Estruturado",
+              "descricao": "Alimentar stack trace, comportamento observado e screenshot de volta para IA",
+              "estrutura": "Estou recebendo o erro X. Identifique a causa raiz e sugira correção GARANTINDO que siga o padrão do Design System."
+            },
+            {
+              "passo": 3,
+              "nome": "Correção Alinhada",
+              "descricao": "Evitar 'gambiarras' que introduzem dívida técnica",
+              "constraint": "Deve estar alinhada com padrões arquiteturais"
+            }
+          ],
+          "prompt_template": "Identifiquei um problema: [ERRO/PROBLEMA]. Stack trace: [STACK]. Comportamento observado: [COMPORTAMENTO]. Screenshot: [SCREENSHOT]. Identifique a causa raiz e forneça uma correção que: 1) Resolve o problema completamente; 2) Segue exatamente o padrão de codificação definido; 3) Mantém compatibilidade com o Design System; 4) Não introduz dívida técnica."
+        },
+        "fase_2_chain_of_thought": {
+          "nome": "Chain-of-Thought (Cadeia de Pensamento) Planejamento",
+          "descricao": "Validação lógica antes de execução",
+          "metodologia": "Forçar IA a 'pensar passo a passo' e externalizar raciocínio",
+          "beneficios": [
+            {
+              "beneficio": "Economia e Eficiência",
+              "descricao": "Corrigir plano em linguagem natural é infinitamente mais rápido que refatorar centenas de linhas"
+            },
+            {
+              "beneficio": "Raciocínio Aprimorado",
+              "descricao": "Externalização melhora comprovadamente qualidade da lógica gerada"
+            }
+          ],
+          "etapas": [
+            "Quais arquivos serão criados/modificados?",
+            "Quais funções serão modificadas ou criadas?",
+            "Qual a lógica de dados (fluxo)?",
+            "Qual é o impacto nas dependências existentes?"
+          ],
+          "prompt_template": "Antes de gerar código, pense passo a passo: 1) Quais arquivos precisam ser criados ou modificados?; 2) Quais funções principais serão implementadas?; 3) Qual é a lógica de dados e fluxo?; 4) Há impacto em componentes existentes? Descreva o plano completo em detalhe. Apenas depois de EU validar este plano, você gerará o código."
+        },
+        "fase_3_qa_seguranca": {
+          "nome": "Camadas de Qualidade: QA, Segurança, TDD",
+          "descricao": "IA atua como guardiã da qualidade",
+          "subcamadas": [
+            {
+              "camada": "QA Assistida",
+              "descricao": "IA muda de persona para Engenheiro de QA Sênior",
+              "responsabilidades": [
+                "Testar edge cases",
+                "Validar requisitos funcionais",
+                "Verificar performance"
+              ]
+            },
+            {
+              "camada": "Segurança",
+              "descricao": "IA muda de persona para Auditor de Segurança",
+              "verificacoes": [
+                "Injeção SQL",
+                "XSS (Cross-Site Scripting)",
+                "Conformidade OWASP Top 10",
+                "Princípios SOLID",
+                "Validação de input"
+              ],
+              "prompt_template": "Atue como um Auditor de Segurança Sênior. Revise o código gerado em busca de: 1) Vulnerabilidades OWASP Top 10; 2) Injeção de SQL ou XSS; 3) Exposição de secrets; 4) Validação insuficiente de input; 5) Conformidade SOLID. Forneça um relatório detalhado e recomendações de correção."
+            },
+            {
+              "camada": "TDD Reverso",
+              "descricao": "IA gera testes para código que criou",
+              "frameworks": [
+                "Jest",
+                "Vitest"
+              ],
+              "beneficio": "Cobertura de testes robusta desde o primeiro dia",
+              "prompt_template": "Gere testes unitários completos (Jest/Vitest) para o código anterior. Inclua: 1) Testes de caso feliz; 2) Testes de edge cases; 3) Testes de erro; 4) Mock de dependências onde necessário. Objetivo: >80% de cobertura."
+            }
+          ]
+        },
+        "fase_4_ci_cd_deploy": {
+          "nome": "Integração CI/CD e Deploy",
+          "descricao": "Conexão com mundo real",
+          "componentes": [
+            {
+              "nome": "Configuração de Pipeline",
+              "descricao": "CI/CD com GitHub Actions ou similar",
+              "elementos": [
+                "Testes automáticos",
+                "Linting e formatação",
+                "Build e minificação",
+                "Deploy automático"
+              ]
+            },
+            {
+              "nome": "Plataformas de Nuvem",
+              "descricao": "Configuração para Vercel, Netlify, AWS",
+              "setup": "Arquivos de configuração (vercel.json, netlify.toml)"
+            },
+            {
+              "nome": "Gestão de Secrets",
+              "descricao": "Variáveis de ambiente seguras",
+              "constraint": "NUNCA hard-coded no código",
+              "metodo": "Usar .env.local, variables do CI/CD, Supabase Admin"
+            }
+          ],
+          "prompt_template": "Configure um pipeline CI/CD para [PLATAFORMA: Vercel/Netlify] que: 1) Execute testes em cada push; 2) Faça linting e formatação; 3) Build a aplicação; 4) Deploy automático na branch main; 5) Configure variáveis de ambiente seguras sem hardcoding. Forneça os arquivos de configuração necessários."
+        }
+      }
+    }
+  },
+  "tecnicas_centrais": {
+    "context_layering": {
+      "descricao": "Empilhamento hierárquico de contextos",
+      "importancia": "Fundamental para manter coerência enquanto complexidade aumenta"
+    },
+    "constraint_anchoring": {
+      "descricao": "Definir regras inquebráveis que limitam espaço de solução",
+      "utilidade": "Essencial para segurança e governança"
+    },
+    "pattern_seeds": {
+      "descricao": "Fornecer exemplos de código ideal",
+      "beneficio": "Garante consistência e manutenibilidade"
+    },
+    "vibe_loop": {
+      "descricao": "Ciclo iterativo de (Prompt -> Gerar -> Refletir -> Corrigir)",
+      "vantagem": "Diálogo colaborativo ao invés de debugging solitário"
+    },
+    "role_assignment": {
+      "descricao": "Mudança de persona da IA conforme necessário",
+      "aplicacoes": [
+        "Arquiteto de Soluções",
+        "Especialista em Vibe Design",
+        "Engenheiro de QA",
+        "Auditor de Segurança"
+      ]
+    }
+  },
+  "artefatos_mestres": [
+    {
+      "numero": 1,
+      "nome": "PRD (Product Requirements Document)",
+      "modulo": "Módulo I",
+      "conteudo": [
+        "Personas",
+        "User Flows",
+        "Funcionalidades",
+        "Esquema de Dados",
+        "Stack Tecnológica"
+      ],
+      "uso": "Contexto imutável para todas as fases seguintes"
+    },
+    {
+      "numero": 2,
+      "nome": "Style Guide + Design System",
+      "modulo": "Módulo II",
+      "conteudo": [
+        "Paleta de Cores",
+        "Tipografia",
+        "Componentização",
+        "Motion UX",
+        "Microcopy",
+        "Acessibilidade"
+      ],
+      "uso": "Define aparência, sensação e inclusão"
+    },
+    {
+      "numero": 3,
+      "nome": "Prompts Mestres Estruturados",
+      "modulo": "Módulo III",
+      "conteudo": [
+        "RTCF Templates",
+        "CRISPA Checklists",
+        "Constraint Anchoring Rules",
+        "Pattern Seeds"
+      ],
+      "uso": "Orquestra geração de código com precisão"
+    },
+    {
+      "numero": 4,
+      "nome": "Código Validado + Testes + CI/CD",
+      "modulo": "Módulo IV",
+      "conteudo": [
+        "Código TypeScript",
+        "Testes Jest/Vitest",
+        "Configuração CI/CD",
+        "Documentação Auto-Gerada"
+      ],
+      "uso": "Produto final pronto para produção"
+    }
+  ],
+  "anti_patterns_evitar": {
+    "vibe_coding_hangover": {
+      "descricao": "Código rápido se torna ininteligível e repleto de falhas de segurança",
+      "mitigacao": "Constraint Anchoring + Context Layering + QA Assistida"
+    },
+    "alucinacao_de_codigo": {
+      "descricao": "IA inventa bibliotecas ou funções inexistentes",
+      "mitigacao": "Fornecer documentação real + Pattern Seeds"
+    },
+    "perda_de_contexto": {
+      "descricao": "IA esquece decisões anteriores em chats longos",
+      "mitigacao": "Re-anexar PRD e Style Guide a cada sessão"
+    },
+    "gambiarras_temporarias": {
+      "descricao": "Correções rápidas que introduzem dívida técnica",
+      "mitigacao": "Vibe Loop com validação de padrões arquiteturais"
+    }
+  },
+  "metricas_sucesso": {
+    "codigo": {
+      "cobertura_testes": "≥ 80%",
+      "conformidade_typescript": "Strict mode, sem 'any'",
+      "wcag_conformidade": "AA mínimo"
+    },
+    "processo": {
+      "tempo_prd_a_mvp": "< 1 semana",
+      "iteracoes_vibe_loop": "< 10 por funcionalidade",
+      "documentacao": "Auto-gerada 100%"
+    },
+    "qualidade": {
+      "seguranca": "Zero vulnerabilidades OWASP detectadas",
+      "performance": "> 90 Lighthouse",
+      "acessibilidade": "100% WCAG AA"
+    }
+  }
+}
