@@ -1,7 +1,7 @@
 import type { FrameworkData, FrameworkModule, FrameworkPhase } from "@shared/schema";
 import frameworkJson from "@assets/schema_framework_1763486881607.json";
 
-export const frameworkData = frameworkJson as FrameworkData;
+export const frameworkData = frameworkJson as unknown as FrameworkData;
 
 export interface ProcessedPhase extends FrameworkPhase {
   moduleNumber: number;
@@ -14,8 +14,8 @@ export function getModules(): FrameworkModule[] {
   return Object.keys(modules)
     .sort()
     .map((key, index) => ({
-      numero: index + 1,
       ...modules[key as keyof typeof modules],
+      numero: index + 1,
     }));
 }
 

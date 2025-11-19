@@ -5,9 +5,9 @@ import { insertProjectSchema, insertModuleProgressSchema, insertMasterArtifactSc
 import { getModules, getPhasesByModule } from "../shared/framework-utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  app.get("/api/projects", async (_req, res) => {
+  app.get("/api/projects", async (req, res) => {
     try {
-      const projects = await storage.getProjects();
+      const projects = await storage.getProjects(req.headers.authorization);
       res.json(projects);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -17,7 +17,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/projects/:id", async (req, res) => {
     try {
-      const project = await storage.getProject(req.params.id);
+      const project = await storage.getProject(req.params.id, req.headers.authorization);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -31,21 +31,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req, res) => {
     try {
       const validatedData = insertProjectSchema.parse(req.body);
-      const project = await storage.createProject(validatedData);
+      const project = await storage.createProject(validatedData, req.headers.authorization);
       res.status(201).json(project);
     } catch (error: any) {
       console.error("Error creating project:", error);
       if (error.name === "ZodError") {
         return res.status(400).json({ error: "Invalid project data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to create project" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorDetails = (error as any).details || (error as any).hint || (error as any).code;
+      res.status(500).json({ error: "Failed to create project", message: errorMessage, details: errorDetails });
     }
   });
 
   app.patch("/api/projects/:id", async (req, res) => {
     try {
       const validatedData = insertProjectSchema.partial().parse(req.body);
-      const project = await storage.updateProject(req.params.id, validatedData);
+      const project = await storage.updateProject(req.params.id, validatedData, req.headers.authorization);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -61,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/projects/:id", async (req, res) => {
     try {
-      const deleted = await storage.deleteProject(req.params.id);
+      const deleted = await storage.deleteProject(req.params.id, req.headers.authorization);
       if (!deleted) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -75,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/module-progress", async (req, res) => {
     try {
       const projectId = req.query.projectId as string | undefined;
-      const progress = await storage.getModuleProgress(projectId);
+      const progress = await storage.getModuleProgress(projectId, req.headers.authorization);
       res.json(progress);
     } catch (error) {
       console.error("Error fetching module progress:", error);
@@ -94,7 +96,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingProgress = await storage.getModuleProgressByPhase(
         projectId,
         moduleNumber,
-        phaseNumber
+        phaseNumber,
+        req.headers.authorization
       );
 
       const module = getModules().find((m) => m.numero === moduleNumber);
@@ -118,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const validatedData = insertModuleProgressSchema.parse(progressData);
-      const progress = await storage.createOrUpdateModuleProgress(validatedData);
+      const progress = await storage.createOrUpdateModuleProgress(validatedData, req.headers.authorization);
       res.json(progress);
     } catch (error: any) {
       console.error("Error updating module progress:", error);
@@ -132,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/master-artifacts", async (req, res) => {
     try {
       const projectId = req.query.projectId as string | undefined;
-      const artifacts = await storage.getMasterArtifacts(projectId);
+      const artifacts = await storage.getMasterArtifacts(projectId, req.headers.authorization);
       res.json(artifacts);
     } catch (error) {
       console.error("Error fetching master artifacts:", error);
@@ -143,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/master-artifacts", async (req, res) => {
     try {
       const validatedData = insertMasterArtifactSchema.parse(req.body);
-      const artifact = await storage.createMasterArtifact(validatedData);
+      const artifact = await storage.createMasterArtifact(validatedData, req.headers.authorization);
       res.status(201).json(artifact);
     } catch (error: any) {
       console.error("Error creating master artifact:", error);
@@ -157,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notes", async (req, res) => {
     try {
       const projectId = req.query.projectId as string | undefined;
-      const notes = await storage.getNotes(projectId);
+      const notes = await storage.getNotes(projectId, req.headers.authorization);
       res.json(notes);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -168,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notes", async (req, res) => {
     try {
       const validatedData = insertNoteSchema.parse(req.body);
-      const note = await storage.createNote(validatedData);
+      const note = await storage.createNote(validatedData, req.headers.authorization);
       res.status(201).json(note);
     } catch (error: any) {
       console.error("Error creating note:", error);
@@ -185,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (typeof content !== "string") {
         return res.status(400).json({ error: "Invalid note content" });
       }
-      const note = await storage.updateNote(req.params.id, content);
+      const note = await storage.updateNote(req.params.id, content, req.headers.authorization);
       if (!note) {
         return res.status(404).json({ error: "Note not found" });
       }

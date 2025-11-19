@@ -1,11 +1,14 @@
-import { Plus, FolderOpen, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { Plus, FolderOpen, CheckCircle2, Circle, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { SidebarSkeleton } from "@/components/loading-skeleton";
 import type { Project, ModuleProgress } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { getAllPhases } from "@/lib/framework-data";
 
 interface ProjectSidebarProps {
   projects: Project[];
@@ -24,11 +27,14 @@ export function ProjectSidebar({
   moduleProgress,
   isLoading = false,
 }: ProjectSidebarProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const totalPhases = getAllPhases().length;
+
   const calculateProgress = (projectId: string) => {
     const projectPhases = moduleProgress.filter((p) => p.projectId === projectId);
-    const total = 12;
     const completed = projectPhases.filter((p) => p.status === "completed").length;
-    return Math.round((completed / total) * 100);
+    // Avoid division by zero if totalPhases is somehow 0, though unlikely
+    return totalPhases > 0 ? Math.round((completed / totalPhases) * 100) : 0;
   };
 
   const getStatusIcon = (projectId: string) => {
@@ -40,15 +46,31 @@ export function ProjectSidebar({
 
   const selectedProgress = selectedProject ? calculateProgress(selectedProject.id) : 0;
 
+  const filteredProjects = projects.filter(project =>
+    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="w-[280px] h-full border-r bg-sidebar flex flex-col">
-      <div className="p-6 border-b">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="p-6 border-b space-y-4">
+        <div className="flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-primary" />
           <h2 className="font-semibold text-sm uppercase tracking-wide text-foreground">
             Projetos
           </h2>
         </div>
+
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar projetos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 h-9 text-sm"
+          />
+        </div>
+
         <Button
           onClick={onCreateProject}
           className="w-full justify-start gap-2"
@@ -65,14 +87,14 @@ export function ProjectSidebar({
         <div className="p-4 space-y-2">
           {isLoading ? (
             <SidebarSkeleton />
-          ) : projects.length === 0 ? (
+          ) : filteredProjects.length === 0 ? (
             <div className="text-center py-8 px-4">
               <p className="text-sm text-muted-foreground">
-                Nenhum projeto criado ainda
+                {searchTerm ? "Nenhum projeto encontrado" : "Nenhum projeto criado ainda"}
               </p>
             </div>
           ) : (
-            projects.map((project) => (
+            filteredProjects.map((project) => (
               <button
                 key={project.id}
                 onClick={() => onSelectProject(project)}
@@ -96,11 +118,14 @@ export function ProjectSidebar({
                       {project.description}
                     </p>
                   )}
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center gap-2">
                     <Progress
                       value={calculateProgress(project.id)}
-                      className="h-1"
+                      className="h-1 flex-1"
                     />
+                    <span className="text-[10px] text-muted-foreground">
+                      {calculateProgress(project.id)}%
+                    </span>
                   </div>
                 </div>
               </button>
@@ -115,7 +140,7 @@ export function ProjectSidebar({
           <div className="p-6">
             <div className="text-center">
               <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                Progresso
+                Progresso Total
               </p>
               <div className="relative inline-flex items-center justify-center">
                 <svg className="w-24 h-24 transform -rotate-90">

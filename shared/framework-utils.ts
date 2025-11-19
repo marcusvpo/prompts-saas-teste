@@ -14,8 +14,8 @@ export function getModules(): FrameworkModule[] {
   return Object.keys(modules)
     .sort()
     .map((key, index) => ({
-      numero: index + 1,
       ...modules[key as keyof typeof modules],
+      numero: index + 1,
     }));
 }
 

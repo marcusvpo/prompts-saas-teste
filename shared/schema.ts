@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -44,8 +45,12 @@ export const notes = pgTable("notes", {
 
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  title: z.string().min(1, "O título é obrigatório").max(100, "O título deve ter no máximo 100 caracteres"),
+  description: z.string().max(500, "A descrição deve ter no máximo 500 caracteres").optional(),
 });
 
 export const insertModuleProgressSchema = createInsertSchema(moduleProgress).omit({

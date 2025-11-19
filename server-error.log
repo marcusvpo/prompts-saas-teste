@@ -1,0 +1,16 @@
+{
+  "cwd": "C:\\Users\\marcu\\OneDrive\\Área de Trabalho\\prompts-saas-teste\\prompts-saas-teste",
+  "error": {
+    "code": "42501",
+    "details": null,
+    "hint": null,
+    "message": "new row violates row-level security policy for table \"projects\""
+  },
+  "errorProps": [
+    "code",
+    "details",
+    "hint",
+    "message"
+  ],
+  "errorMessage": "[object Object]"
+}

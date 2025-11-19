@@ -1,26 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Download, Lightbulb } from "lucide-react";
+import { Download, Lightbulb, ChevronRight, Home as HomeIcon, ArrowUp, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectSidebar } from "@/components/project-sidebar";
 import { ModuleCard } from "@/components/module-card";
 import { PhaseDetailDialog } from "@/components/phase-detail-dialog";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { ExportDialog } from "@/components/export-dialog";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoadmapSkeleton } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getModules, getPhaseDetails } from "@/lib/framework-data";
 import type { Project, ModuleProgress, MasterArtifact, InsertProject, PhaseStatus } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<{ moduleNumber: number; phaseNumber: number } | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -49,8 +54,11 @@ export default function Home() {
   });
 
   const createProjectMutation = useMutation({
-    mutationFn: (data: InsertProject) => apiRequest("POST", "/api/projects", data),
-    onSuccess: (newProject) => {
+    mutationFn: async (data: InsertProject) => {
+      const res = await apiRequest("POST", "/api/projects", data);
+      return await res.json();
+    },
+    onSuccess: (newProject: Project) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       setCreateDialogOpen(false);
       setSelectedProject(newProject);
@@ -63,6 +71,26 @@ export default function Home() {
       toast({
         title: "Erro ao criar projeto",
         description: "Não foi possível criar o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: (projectId: string) => apiRequest("DELETE", `/api/projects/${projectId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setDeleteDialogOpen(false);
+      setSelectedProject(null);
+      toast({
+        title: "Projeto excluído",
+        description: "O projeto foi excluído com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o projeto. Tente novamente.",
         variant: "destructive",
       });
     },
@@ -110,7 +138,7 @@ export default function Home() {
     setSelectedPhase({ moduleNumber, phaseNumber });
   };
 
-  const handleSavePhase = async (moduleNumber: number, phaseNumber: number, content: string): Promise<void> => {
+  const handleSavePhase = useCallback(async (moduleNumber: number, phaseNumber: number, content: string): Promise<void> => {
     if (!selectedProject) {
       toast({
         title: "Erro",
@@ -119,8 +147,23 @@ export default function Home() {
       });
       throw new Error("No project selected");
     }
-    
+
     await updateProgressMutation.mutateAsync({ moduleNumber, phaseNumber, content });
+  }, [selectedProject, updateProgressMutation, toast]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (e.currentTarget.scrollTop > 300) {
+      setShowBackToTop(true);
+    } else {
+      setShowBackToTop(false);
+    }
+  };
+
+  const scrollToTop = () => {
+    const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollArea) {
+      scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const phaseStatuses = getPhaseStatuses();
@@ -130,11 +173,11 @@ export default function Home() {
 
   const currentPhaseContent = selectedPhase && selectedProject
     ? moduleProgress.find(
-        (p) =>
-          p.projectId === selectedProject.id &&
-          p.moduleNumber === selectedPhase.moduleNumber &&
-          p.phaseNumber === selectedPhase.phaseNumber
-      )?.content || ""
+      (p) =>
+        p.projectId === selectedProject.id &&
+        p.moduleNumber === selectedPhase.moduleNumber &&
+        p.phaseNumber === selectedPhase.phaseNumber
+    )?.content || ""
     : "";
 
   return (
@@ -148,42 +191,55 @@ export default function Home() {
         isLoading={projectsLoading}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 border-b bg-background px-6 flex items-center justify-between flex-shrink-0">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <header className="h-16 border-b bg-background px-6 flex items-center justify-between flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold tracking-tight">Framework Vibe Coding</h1>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <HomeIcon className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
             </div>
-            {selectedProject && (
-              <>
-                <div className="h-6 w-px bg-border" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{selectedProject.title}</p>
-                  <p className="text-xs text-muted-foreground">Projeto Selecionado</p>
-                </div>
-              </>
+
+            {selectedProject ? (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-foreground">{selectedProject.title}</span>
+                <Badge variant="secondary" className="text-xs">
+                  Em Andamento
+                </Badge>
+              </div>
+            ) : (
+              <span className="font-medium text-foreground">Início</span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
             {selectedProject && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setExportDialogOpen(true)}
-                className="gap-2"
-                data-testid="button-export-project"
-              >
-                <Download className="h-4 w-4" />
-                Exportar
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-muted-foreground hover:text-destructive"
+                  title="Excluir Projeto"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExportDialogOpen(true)}
+                  className="gap-2"
+                  data-testid="button-export-project"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </>
             )}
             <ThemeToggle />
           </div>
         </header>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1" onScrollCapture={handleScroll}>
           {selectedProject ? (
             <div className="max-w-4xl mx-auto px-8 py-12">
               <div className="mb-8">
@@ -223,26 +279,40 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center max-w-md px-8">
-                <Lightbulb className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-2xl font-bold mb-2 text-foreground">
-                  Bem-vindo ao Framework Vibe Coding
+            <div className="h-full flex items-center justify-center bg-muted/10">
+              <div className="text-center max-w-md px-8 py-12 bg-card rounded-xl border shadow-sm">
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Lightbulb className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3 text-foreground">
+                  Comece seu Projeto
                 </h2>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Crie seu primeiro projeto para começar a estruturar o desenvolvimento com IA de forma profissional.
+                <p className="text-muted-foreground mb-8 leading-relaxed">
+                  Crie seu primeiro projeto para começar a estruturar o desenvolvimento com IA de forma profissional usando nosso framework.
                 </p>
                 <Button
                   onClick={() => setCreateDialogOpen(true)}
                   size="lg"
+                  className="w-full"
                   data-testid="button-create-first-project"
                 >
-                  Criar Primeiro Projeto
+                  Criar Novo Projeto
                 </Button>
               </div>
             </div>
           )}
         </ScrollArea>
+
+        {showBackToTop && (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="absolute bottom-8 right-8 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-bottom-4"
+            onClick={scrollToTop}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <CreateProjectDialog
@@ -252,7 +322,7 @@ export default function Home() {
       />
 
       <PhaseDetailDialog
-        phase={currentPhaseDetails}
+        phase={currentPhaseDetails ?? null}
         isOpen={!!selectedPhase}
         onClose={() => setSelectedPhase(null)}
         onSave={handleSavePhase}
@@ -267,6 +337,17 @@ export default function Home() {
         moduleProgress={moduleProgress.filter((p) => p.projectId === selectedProject?.id)}
         masterArtifacts={masterArtifacts.filter((a) => a.projectId === selectedProject?.id)}
       />
+
+      {selectedProject && (
+        <DeleteConfirmDialog
+          isOpen={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={() => deleteProjectMutation.mutate(selectedProject.id)}
+          title="Excluir Projeto"
+          description={`Tem certeza que deseja excluir o projeto "${selectedProject.title}"? Esta ação não pode ser desfeita e todos os dados associados serão perdidos.`}
+          isDeleting={deleteProjectMutation.isPending}
+        />
+      )}
     </div>
   );
 }
