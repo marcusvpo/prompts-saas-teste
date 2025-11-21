@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { Download, Lightbulb, ChevronRight, Home as HomeIcon, ArrowUp, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useProjects, useCreateProject, useDeleteProject } from "@/hooks/use-projects";
+import { useModuleProgress, useUpdateModuleProgress } from "@/hooks/use-module-progress";
+import { useProjectMasterArtifacts } from "@/hooks/use-master-artifacts";
 import { ProjectSidebar } from "@/components/project-sidebar";
 import { ModuleCard } from "@/components/module-card";
 import { PhaseDetailDialog } from "@/components/phase-detail-dialog";
@@ -10,13 +12,12 @@ import { ExportDialog } from "@/components/export-dialog";
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoadmapSkeleton } from "@/components/loading-skeleton";
+import { ErrorState } from "@/components/loading-states";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getModules, getPhaseDetails } from "@/lib/framework-data";
-import type { Project, ModuleProgress, MasterArtifact, InsertProject, PhaseStatus, ProjectWithProgress } from "@shared/schema";
-import { logger } from "@/lib/logger";
+import type { PhaseStatus, ProjectWithProgress } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -28,110 +29,35 @@ export default function Home() {
   const [selectedPhase, setSelectedPhase] = useState<{ moduleNumber: number; phaseNumber: number } | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const { data: projects = [], isLoading: projectsLoading, isError: projectsError } = useQuery<ProjectWithProgress[]>({
-    queryKey: ["/api/projects"],
-  });
+  // Use centralized hooks
+  const { data: projects = [], isLoading: projectsLoading, isError: projectsError, refetch: refetchProjects } = useProjects();
+  const { data: moduleProgress = [], isLoading: progressLoading } = useModuleProgress(selectedProject?.id || null);
+  const { data: masterArtifacts = [] } = useProjectMasterArtifacts(selectedProject?.id || null);
+  
+  const createProjectMutation = useCreateProject();
+  const deleteProjectMutation = useDeleteProject();
+  const updateProgressMutation = useUpdateModuleProgress();
 
-  useEffect(() => {
-    if (projectsError) {
-      toast({
-        title: "Erro ao carregar projetos",
-        description: "Não foi possível carregar a lista de projetos. Tente recarregar a página.",
-        variant: "destructive",
-      });
-    }
-  }, [projectsError, toast]);
+  // Handle project creation with custom logic
+  const handleCreateProject = useCallback((data: any) => {
+    createProjectMutation.mutate(data, {
+      onSuccess: (newProject: any) => {
+        setCreateDialogOpen(false);
+        setSelectedProject(newProject);
+      },
+    });
+  }, [createProjectMutation]);
 
-  // We still fetch specific module progress for the selected project to ensure we have the latest data for the view
-  // although we could potentially rely on the projects query if we invalidate it correctly.
-  const { data: moduleProgress = [], isLoading: progressLoading } = useQuery<ModuleProgress[]>({
-    queryKey: ["/api/module-progress", selectedProject?.id],
-    queryFn: async () => {
-      if (!selectedProject) return [];
-      const response = await fetch(`/api/module-progress?projectId=${selectedProject.id}`);
-      if (!response.ok) throw new Error("Failed to fetch module progress");
-      return response.json();
-    },
-    enabled: !!selectedProject,
-  });
-
-  const { data: masterArtifacts = [] } = useQuery<MasterArtifact[]>({
-    queryKey: ["/api/master-artifacts", selectedProject?.id],
-    queryFn: async () => {
-      if (!selectedProject) return [];
-      const response = await fetch(`/api/master-artifacts?projectId=${selectedProject.id}`);
-      if (!response.ok) throw new Error("Failed to fetch master artifacts");
-      return response.json();
-    },
-    enabled: !!selectedProject,
-  });
-
-  const createProjectMutation = useMutation({
-    mutationFn: async (data: InsertProject) => {
-      const res = await apiRequest("POST", "/api/projects", data);
-      return await res.json();
-    },
-    onSuccess: (newProject: ProjectWithProgress) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-      setCreateDialogOpen(false);
-      setSelectedProject(newProject);
-      toast({
-        title: "Projeto criado!",
-        description: `${newProject.title} foi criado com sucesso.`,
-      });
-    },
-    onError: (error) => {
-      logger.error("Error creating project", error);
-      toast({
-        title: "Erro ao criar projeto",
-        description: "Não foi possível criar o projeto. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteProjectMutation = useMutation({
-    mutationFn: (projectId: string) => apiRequest("DELETE", `/api/projects/${projectId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-      setDeleteDialogOpen(false);
-      setSelectedProject(null);
-      toast({
-        title: "Projeto excluído",
-        description: "O projeto foi excluído com sucesso.",
-      });
-    },
-    onError: (error) => {
-      logger.error("Error deleting project", error);
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o projeto. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateProgressMutation = useMutation({
-    mutationFn: ({ moduleNumber, phaseNumber, content }: { moduleNumber: number; phaseNumber: number; content: string }) => {
-      if (!selectedProject) {
-        throw new Error("No project selected");
-      }
-      return apiRequest("POST", "/api/module-progress", {
-        projectId: selectedProject.id,
-        moduleNumber,
-        phaseNumber,
-        content,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/module-progress", selectedProject?.id] });
-      // Also invalidate projects to update the sidebar progress
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-    },
-    onError: (error) => {
-      logger.error("Error updating progress", error);
-    }
-  });
+  // Handle project deletion with custom logic
+  const handleDeleteProject = useCallback(() => {
+    if (!selectedProject) return;
+    deleteProjectMutation.mutate(selectedProject.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        setSelectedProject(null);
+      },
+    });
+  }, [selectedProject, deleteProjectMutation]);
 
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
@@ -179,7 +105,21 @@ export default function Home() {
       throw new Error("No project selected");
     }
 
-    await updateProgressMutation.mutateAsync({ moduleNumber, phaseNumber, content });
+    // Get phase details to extract titles
+    const phaseDetails = getPhaseDetails(moduleNumber, phaseNumber);
+    if (!phaseDetails) {
+      throw new Error("Phase not found");
+    }
+
+    await updateProgressMutation.mutateAsync({
+      projectId: selectedProject.id,
+      moduleNumber,
+      moduleTitle: phaseDetails.moduleTitle,
+      phaseNumber,
+      phaseTitle: phaseDetails.nome,
+      content,
+      status: "in_progress" as PhaseStatus,
+    });
   }, [selectedProject, updateProgressMutation, toast]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -352,7 +292,7 @@ export default function Home() {
       <CreateProjectDialog
         isOpen={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
-        onSubmit={(data) => createProjectMutation.mutate(data)}
+        onSubmit={handleCreateProject}
       />
 
       <PhaseDetailDialog
@@ -376,7 +316,7 @@ export default function Home() {
         <DeleteConfirmDialog
           isOpen={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
-          onConfirm={() => deleteProjectMutation.mutate(selectedProject.id)}
+          onConfirm={handleDeleteProject}
           title="Excluir Projeto"
           description={`Tem certeza que deseja excluir o projeto "${selectedProject.title}"? Esta ação não pode ser desfeita e todos os dados associados serão perdidos.`}
           isDeleting={deleteProjectMutation.isPending}
