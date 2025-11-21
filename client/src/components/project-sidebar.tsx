@@ -5,19 +5,21 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { SidebarSkeleton } from "@/components/loading-skeleton";
-import type { Project, ModuleProgress } from "@shared/schema";
+import type { Project, ModuleProgress, ProjectWithProgress } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { getAllPhases } from "@/lib/framework-data";
 
 interface ProjectSidebarProps {
-  projects: Project[];
-  selectedProject: Project | null;
-  onSelectProject: (project: Project) => void;
+  projects: ProjectWithProgress[];
+  selectedProject: ProjectWithProgress | null;
+  onSelectProject: (project: ProjectWithProgress) => void;
   onCreateProject: () => void;
   moduleProgress: ModuleProgress[];
   isLoading?: boolean;
 }
+
+import { calculateProgress } from "@/lib/project-utils";
 
 export function ProjectSidebar({
   projects,
@@ -28,28 +30,26 @@ export function ProjectSidebar({
   isLoading = false,
 }: ProjectSidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [visibleProjects, setVisibleProjects] = useState(10);
   const totalPhases = getAllPhases().length;
 
-  const calculateProgress = (projectId: string) => {
-    const projectPhases = moduleProgress.filter((p) => p.projectId === projectId);
-    const completed = projectPhases.filter((p) => p.status === "completed").length;
-    // Avoid division by zero if totalPhases is somehow 0, though unlikely
-    return totalPhases > 0 ? Math.round((completed / totalPhases) * 100) : 0;
-  };
+  // calculateProgress is now imported from utils
+
 
   const getStatusIcon = (projectId: string) => {
-    const progress = calculateProgress(projectId);
+    const progress = calculateProgress(projectId, moduleProgress, totalPhases);
     if (progress === 100) return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />;
     if (progress > 0) return <Loader2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
     return <Circle className="h-4 w-4 text-muted-foreground" />;
   };
 
-  const selectedProgress = selectedProject ? calculateProgress(selectedProject.id) : 0;
+  const selectedProgress = selectedProject ? calculateProgress(selectedProject.id, moduleProgress, totalPhases) : 0;
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   return (
     <div className="w-[280px] h-full border-r bg-sidebar flex flex-col">
@@ -94,42 +94,54 @@ export function ProjectSidebar({
               </p>
             </div>
           ) : (
-            filteredProjects.map((project) => (
-              <button
-                key={project.id}
-                onClick={() => onSelectProject(project)}
-                className={cn(
-                  "w-full text-left p-3 rounded-md transition-all",
-                  "hover-elevate active-elevate-2",
-                  "flex items-start gap-3",
-                  selectedProject?.id === project.id
-                    ? "bg-sidebar-accent border border-sidebar-accent-border"
-                    : "border border-transparent"
-                )}
-                data-testid={`button-select-project-${project.id}`}
-              >
-                <div className="mt-0.5">{getStatusIcon(project.id)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate text-sidebar-foreground">
-                    {project.title}
-                  </p>
-                  {project.description && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {project.description}
-                    </p>
+            <>
+              {filteredProjects.slice(0, visibleProjects).map((project) => (
+                <button
+                  key={project.id}
+                  onClick={() => onSelectProject(project)}
+                  className={cn(
+                    "w-full text-left p-3 rounded-md transition-all",
+                    "hover-elevate active-elevate-2",
+                    "flex items-start gap-3",
+                    selectedProject?.id === project.id
+                      ? "bg-sidebar-accent border border-sidebar-accent-border"
+                      : "border border-transparent"
                   )}
-                  <div className="mt-2 flex items-center gap-2">
-                    <Progress
-                      value={calculateProgress(project.id)}
-                      className="h-1 flex-1"
-                    />
-                    <span className="text-[10px] text-muted-foreground">
-                      {calculateProgress(project.id)}%
-                    </span>
+                  data-testid={`button-select-project-${project.id}`}
+                >
+                  <div className="mt-0.5">{getStatusIcon(project.id)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate text-sidebar-foreground">
+                      {project.title}
+                    </p>
+                    {project.description && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {project.description}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <Progress
+                        value={calculateProgress(project.id, moduleProgress, totalPhases)}
+                        className="h-1 flex-1"
+                      />
+                      <span className="text-[10px] text-muted-foreground">
+                        {calculateProgress(project.id, moduleProgress, totalPhases)}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))
+                </button>
+              ))}
+              {visibleProjects < filteredProjects.length && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setVisibleProjects((prev) => prev + 10)}
+                >
+                  Carregar mais
+                </Button>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>

@@ -4,7 +4,20 @@ import { storage } from "./storage";
 import { insertProjectSchema, insertModuleProgressSchema, insertMasterArtifactSchema, insertNoteSchema } from "@shared/schema";
 import { getModules, getPhasesByModule } from "../shared/framework-utils";
 
+import rateLimit from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply rate limiting to all api routes
+  app.use("/api", limiter);
+
   app.get("/api/projects", async (req, res) => {
     try {
       const projects = await storage.getProjects(req.headers.authorization);

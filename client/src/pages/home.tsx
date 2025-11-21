@@ -15,22 +15,35 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getModules, getPhaseDetails } from "@/lib/framework-data";
-import type { Project, ModuleProgress, MasterArtifact, InsertProject, PhaseStatus } from "@shared/schema";
+import type { Project, ModuleProgress, MasterArtifact, InsertProject, PhaseStatus, ProjectWithProgress } from "@shared/schema";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { toast } = useToast();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectWithProgress | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<{ moduleNumber: number; phaseNumber: number } | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
+  const { data: projects = [], isLoading: projectsLoading, isError: projectsError } = useQuery<ProjectWithProgress[]>({
     queryKey: ["/api/projects"],
   });
 
+  useEffect(() => {
+    if (projectsError) {
+      toast({
+        title: "Erro ao carregar projetos",
+        description: "Não foi possível carregar a lista de projetos. Tente recarregar a página.",
+        variant: "destructive",
+      });
+    }
+  }, [projectsError, toast]);
+
+  // We still fetch specific module progress for the selected project to ensure we have the latest data for the view
+  // although we could potentially rely on the projects query if we invalidate it correctly.
   const { data: moduleProgress = [], isLoading: progressLoading } = useQuery<ModuleProgress[]>({
     queryKey: ["/api/module-progress", selectedProject?.id],
     queryFn: async () => {
@@ -58,7 +71,7 @@ export default function Home() {
       const res = await apiRequest("POST", "/api/projects", data);
       return await res.json();
     },
-    onSuccess: (newProject: Project) => {
+    onSuccess: (newProject: ProjectWithProgress) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       setCreateDialogOpen(false);
       setSelectedProject(newProject);
@@ -67,7 +80,8 @@ export default function Home() {
         description: `${newProject.title} foi criado com sucesso.`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      logger.error("Error creating project", error);
       toast({
         title: "Erro ao criar projeto",
         description: "Não foi possível criar o projeto. Tente novamente.",
@@ -87,7 +101,8 @@ export default function Home() {
         description: "O projeto foi excluído com sucesso.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      logger.error("Error deleting project", error);
       toast({
         title: "Erro ao excluir",
         description: "Não foi possível excluir o projeto. Tente novamente.",
@@ -110,12 +125,27 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/module-progress", selectedProject?.id] });
+      // Also invalidate projects to update the sidebar progress
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
+    onError: (error) => {
+      logger.error("Error updating progress", error);
+    }
   });
 
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
       setSelectedProject(projects[0]);
+    }
+  }, [projects, selectedProject]);
+
+  // Update selectedProject when projects list updates (to keep progress in sync if we used it directly)
+  useEffect(() => {
+    if (selectedProject) {
+      const updated = projects.find(p => p.id === selectedProject.id);
+      if (updated && updated !== selectedProject) {
+        setSelectedProject(updated);
+      }
     }
   }, [projects, selectedProject]);
 
@@ -125,6 +155,7 @@ export default function Home() {
     const statuses: Record<string, PhaseStatus> = {};
     if (!selectedProject) return statuses;
 
+    // Use the specific moduleProgress query data for the current view to ensure responsiveness
     const projectProgress = moduleProgress.filter((p) => p.projectId === selectedProject.id);
     projectProgress.forEach((progress) => {
       const key = `${progress.moduleNumber}-${progress.phaseNumber}`;
@@ -180,6 +211,9 @@ export default function Home() {
     )?.content || ""
     : "";
 
+  // Combine all module progress for the sidebar
+  const allModuleProgress = projects.flatMap(p => p.moduleProgress);
+
   return (
     <div className="flex h-screen bg-background">
       <ProjectSidebar
@@ -187,7 +221,7 @@ export default function Home() {
         selectedProject={selectedProject}
         onSelectProject={setSelectedProject}
         onCreateProject={() => setCreateDialogOpen(true)}
-        moduleProgress={moduleProgress.filter((p) => p.projectId === selectedProject?.id)}
+        moduleProgress={allModuleProgress}
         isLoading={projectsLoading}
       />
 

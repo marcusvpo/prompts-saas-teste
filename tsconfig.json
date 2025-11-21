@@ -7,8 +7,7 @@
   "exclude": [
     "node_modules",
     "build",
-    "dist",
-    "**/*.test.ts"
+    "dist"
   ],
   "compilerOptions": {
     "incremental": true,

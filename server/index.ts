@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { parseArgs } from "util";
+import cors from "cors";
 
 const { values: { port: portStr = process.env.PORT || "5000", host = "0.0.0.0" } } = parseArgs({
   options: {
@@ -19,6 +20,11 @@ const { values: { port: portStr = process.env.PORT || "5000", host = "0.0.0.0" }
 const port = parseInt(portStr, 10);
 
 const app = express();
+
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,
+}));
 
 declare module 'http' {
   interface IncomingMessage {

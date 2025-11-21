@@ -7,6 +7,7 @@ import {
   type InsertMasterArtifact,
   type Note,
   type InsertNote,
+  type ProjectWithProgress,
 } from "@shared/schema";
 import { createClient } from "@supabase/supabase-js";
 import { getModules, getAllPhases } from "../shared/framework-utils";
@@ -21,7 +22,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface IStorage {
-  getProjects(token?: string): Promise<Project[]>;
+  getProjects(token?: string): Promise<ProjectWithProgress[]>;
   getProject(id: string, token?: string): Promise<Project | undefined>;
   createProject(project: InsertProject, token?: string): Promise<Project>;
   updateProject(id: string, project: Partial<InsertProject>, token?: string): Promise<Project | undefined>;
@@ -61,22 +62,39 @@ export class SupabaseStorage implements IStorage {
     });
   }
 
-  async getProjects(token?: string): Promise<Project[]> {
-    const { data, error } = await this.getClient(token)
-      .from("projects")
-      .select("*")
-      .order("created_at", { ascending: false });
+  private async withTimeout<T>(promise: PromiseLike<T>, ms: number = 10000): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), ms)
+      ),
+    ]);
+  }
+
+  async getProjects(token?: string): Promise<ProjectWithProgress[]> {
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("projects")
+        .select("*, module_progress(*)")
+        .order("created_at", { ascending: false })
+    );
 
     if (error) throw error;
-    return data.map(this.mapProject);
+    
+    return data.map((p: any) => ({
+      ...this.mapProject(p),
+      moduleProgress: p.module_progress ? p.module_progress.map(this.mapModuleProgress) : [],
+    }));
   }
 
   async getProject(id: string, token?: string): Promise<Project | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("projects")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapProject(data);
@@ -90,14 +108,16 @@ export class SupabaseStorage implements IStorage {
       throw new Error("User must be authenticated to create a project");
     }
 
-    const { data, error } = await client
-      .from("projects")
-      .insert({
-        ...insertProject,
-        user_id: user.id,
-      })
-      .select()
-      .single();
+    const { data, error } = await this.withTimeout(
+      client
+        .from("projects")
+        .insert({
+          ...insertProject,
+          user_id: user.id,
+        })
+        .select()
+        .single()
+    );
 
     if (error) throw error;
     const project = this.mapProject(data);
@@ -110,19 +130,23 @@ export class SupabaseStorage implements IStorage {
     updates: Partial<InsertProject>,
     token?: string
   ): Promise<Project | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("projects")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("projects")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapProject(data);
   }
 
   async deleteProject(id: string, token?: string): Promise<boolean> {
-    const { error } = await this.getClient(token).from("projects").delete().eq("id", id);
+    const { error } = await this.withTimeout(
+      this.getClient(token).from("projects").delete().eq("id", id)
+    );
     return !error;
   }
 
@@ -131,7 +155,7 @@ export class SupabaseStorage implements IStorage {
     if (projectId) {
       query = query.eq("project_id", projectId);
     }
-    const { data, error } = await query;
+    const { data, error } = await this.withTimeout(query);
     if (error) throw error;
     return data.map(this.mapModuleProgress);
   }
@@ -142,13 +166,15 @@ export class SupabaseStorage implements IStorage {
     phaseNumber: number,
     token?: string
   ): Promise<ModuleProgress | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("module_progress")
-      .select("*")
-      .eq("project_id", projectId)
-      .eq("module_number", moduleNumber)
-      .eq("phase_number", phaseNumber)
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("module_progress")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("module_number", moduleNumber)
+        .eq("phase_number", phaseNumber)
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapModuleProgress(data);
@@ -168,52 +194,60 @@ export class SupabaseStorage implements IStorage {
 
     let result;
     if (existing) {
-      const { data, error } = await this.getClient(token)
-        .from("module_progress")
-        .update({
-          content: insertProgress.content,
-          prompt_created: insertProgress.promptCreated,
-          status: insertProgress.status || existing.status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id)
-        .select()
-        .single();
+      const { data, error } = await this.withTimeout(
+        this.getClient(token)
+          .from("module_progress")
+          .update({
+            content: insertProgress.content,
+            prompt_created: insertProgress.promptCreated,
+            status: insertProgress.status || existing.status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id)
+          .select()
+          .single()
+      );
       if (error) throw error;
       result = data;
     } else {
-      const { data, error } = await this.getClient(token)
-        .from("module_progress")
-        .insert({
-          project_id: insertProgress.projectId,
-          module_number: insertProgress.moduleNumber,
-          module_title: insertProgress.moduleTitle,
-          phase_number: insertProgress.phaseNumber,
-          phase_title: insertProgress.phaseTitle,
-          content: insertProgress.content,
-          prompt_created: insertProgress.promptCreated,
-          status: insertProgress.status || "not_started",
-        })
-        .select()
-        .single();
+      const { data, error } = await this.withTimeout(
+        this.getClient(token)
+          .from("module_progress")
+          .insert({
+            project_id: insertProgress.projectId,
+            module_number: insertProgress.moduleNumber,
+            module_title: insertProgress.moduleTitle,
+            phase_number: insertProgress.phaseNumber,
+            phase_title: insertProgress.phaseTitle,
+            content: insertProgress.content,
+            prompt_created: insertProgress.promptCreated,
+            status: insertProgress.status || "not_started",
+          })
+          .select()
+          .single()
+      );
       if (error) throw error;
       result = data;
     }
 
     // Update project timestamp
-    await this.getClient(token)
-      .from("projects")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", insertProgress.projectId);
+    await this.withTimeout(
+      this.getClient(token)
+        .from("projects")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", insertProgress.projectId)
+    );
 
     return this.mapModuleProgress(result);
   }
 
   async deleteModuleProgressByProject(projectId: string, token?: string): Promise<boolean> {
-    const { error } = await this.getClient(token)
-      .from("module_progress")
-      .delete()
-      .eq("project_id", projectId);
+    const { error } = await this.withTimeout(
+      this.getClient(token)
+        .from("module_progress")
+        .delete()
+        .eq("project_id", projectId)
+    );
     return !error;
   }
 
@@ -222,17 +256,19 @@ export class SupabaseStorage implements IStorage {
     if (projectId) {
       query = query.eq("project_id", projectId);
     }
-    const { data, error } = await query;
+    const { data, error } = await this.withTimeout(query);
     if (error) throw error;
     return data.map(this.mapMasterArtifact);
   }
 
   async getMasterArtifact(id: string, token?: string): Promise<MasterArtifact | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("master_artifacts")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("master_artifacts")
+        .select("*")
+        .eq("id", id)
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapMasterArtifact(data);
@@ -242,25 +278,29 @@ export class SupabaseStorage implements IStorage {
     insertArtifact: InsertMasterArtifact,
     token?: string
   ): Promise<MasterArtifact> {
-    const { data, error } = await this.getClient(token)
-      .from("master_artifacts")
-      .insert({
-        project_id: insertArtifact.projectId,
-        artifact_type: insertArtifact.artifactType,
-        artifact_content: insertArtifact.artifactContent,
-      })
-      .select()
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("master_artifacts")
+        .insert({
+          project_id: insertArtifact.projectId,
+          artifact_type: insertArtifact.artifactType,
+          artifact_content: insertArtifact.artifactContent,
+        })
+        .select()
+        .single()
+    );
 
     if (error) throw error;
     return this.mapMasterArtifact(data);
   }
 
   async deleteMasterArtifactsByProject(projectId: string, token?: string): Promise<boolean> {
-    const { error } = await this.getClient(token)
-      .from("master_artifacts")
-      .delete()
-      .eq("project_id", projectId);
+    const { error } = await this.withTimeout(
+      this.getClient(token)
+        .from("master_artifacts")
+        .delete()
+        .eq("project_id", projectId)
+    );
     return !error;
   }
 
@@ -269,53 +309,61 @@ export class SupabaseStorage implements IStorage {
     if (projectId) {
       query = query.eq("project_id", projectId);
     }
-    const { data, error } = await query;
+    const { data, error } = await this.withTimeout(query);
     if (error) throw error;
     return data.map(this.mapNote);
   }
 
   async getNote(id: string, token?: string): Promise<Note | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("notes")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("notes")
+        .select("*")
+        .eq("id", id)
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapNote(data);
   }
 
   async createNote(insertNote: InsertNote, token?: string): Promise<Note> {
-    const { data, error } = await this.getClient(token)
-      .from("notes")
-      .insert({
-        project_id: insertNote.projectId,
-        content: insertNote.content,
-      })
-      .select()
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("notes")
+        .insert({
+          project_id: insertNote.projectId,
+          content: insertNote.content,
+        })
+        .select()
+        .single()
+    );
 
     if (error) throw error;
     return this.mapNote(data);
   }
 
   async updateNote(id: string, content: string, token?: string): Promise<Note | undefined> {
-    const { data, error } = await this.getClient(token)
-      .from("notes")
-      .update({
-        content,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await this.withTimeout(
+      this.getClient(token)
+        .from("notes")
+        .update({
+          content,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single()
+    );
 
     if (error) return undefined;
     return this.mapNote(data);
   }
 
   async deleteNotesByProject(projectId: string, token?: string): Promise<boolean> {
-    const { error } = await this.getClient(token).from("notes").delete().eq("project_id", projectId);
+    const { error } = await this.withTimeout(
+      this.getClient(token).from("notes").delete().eq("project_id", projectId)
+    );
     return !error;
   }
 
@@ -337,7 +385,9 @@ export class SupabaseStorage implements IStorage {
       };
     });
 
-    const { error } = await this.getClient(token).from("module_progress").insert(phasesToInsert);
+    const { error } = await this.withTimeout(
+      this.getClient(token).from("module_progress").insert(phasesToInsert)
+    );
     if (error) console.error("Error initializing phases:", error);
   }
 

@@ -43,20 +43,28 @@ export const notes = pgTable("notes", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export enum PhaseStatus {
+  NOT_STARTED = "not_started",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+}
+
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
-  title: z.string().min(1, "O título é obrigatório").max(100, "O título deve ter no máximo 100 caracteres"),
-  description: z.string().max(500, "A descrição deve ter no máximo 500 caracteres").optional(),
+  title: z.string().trim().min(1, "O título é obrigatório").max(100, "O título deve ter no máximo 100 caracteres"),
+  description: z.string().trim().max(500, "A descrição deve ter no máximo 500 caracteres").optional(),
 });
 
 export const insertModuleProgressSchema = createInsertSchema(moduleProgress).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  status: z.nativeEnum(PhaseStatus).default(PhaseStatus.NOT_STARTED),
 });
 
 export const insertMasterArtifactSchema = createInsertSchema(masterArtifacts).omit({
@@ -83,7 +91,9 @@ export type MasterArtifact = typeof masterArtifacts.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
 
-export type PhaseStatus = "not_started" | "in_progress" | "completed";
+export type ProjectWithProgress = Project & {
+  moduleProgress: ModuleProgress[];
+};
 
 export interface FrameworkPhase {
   id: string;
