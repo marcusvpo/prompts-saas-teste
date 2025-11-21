@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import {
   type Project,
   type InsertProject,
@@ -173,10 +174,10 @@ export class SupabaseStorage implements IStorage {
         .eq("project_id", projectId)
         .eq("module_number", moduleNumber)
         .eq("phase_number", phaseNumber)
-        .single()
+        .maybeSingle()
     );
 
-    if (error) return undefined;
+    if (error || !data) return undefined;
     return this.mapModuleProgress(data);
   }
 
@@ -214,6 +215,7 @@ export class SupabaseStorage implements IStorage {
         this.getClient(token)
           .from("module_progress")
           .insert({
+            id: randomUUID(),
             project_id: insertProgress.projectId,
             module_number: insertProgress.moduleNumber,
             module_title: insertProgress.moduleTitle,
@@ -231,12 +233,17 @@ export class SupabaseStorage implements IStorage {
     }
 
     // Update project timestamp
-    await this.withTimeout(
-      this.getClient(token)
-        .from("projects")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", insertProgress.projectId)
-    );
+    try {
+      await this.withTimeout(
+        this.getClient(token)
+          .from("projects")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", insertProgress.projectId)
+      );
+    } catch (error) {
+      console.error("Error updating project timestamp:", error);
+      // Ignore error as this is not critical
+    }
 
     return this.mapModuleProgress(result);
   }
@@ -382,6 +389,7 @@ export class SupabaseStorage implements IStorage {
         status: "not_started",
         content: null,
         prompt_created: null,
+        id: randomUUID(),
       };
     });
 

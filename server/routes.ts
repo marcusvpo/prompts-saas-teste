@@ -103,6 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { projectId, moduleNumber, phaseNumber, content } = req.body;
 
       if (!projectId || !moduleNumber || !phaseNumber) {
+        console.error("Missing required fields:", { projectId, moduleNumber, phaseNumber });
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -117,6 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const phase = getPhasesByModule(moduleNumber).find((p) => p.phaseNumber === phaseNumber);
 
       if (!module || !phase) {
+        console.error("Invalid module or phase:", { moduleNumber, phaseNumber });
         return res.status(400).json({ error: "Invalid module or phase number" });
       }
 
@@ -139,6 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating module progress:", error);
       if (error.name === "ZodError") {
+        console.error("Zod validation error:", error.errors);
         return res.status(400).json({ error: "Invalid progress data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to update module progress" });
